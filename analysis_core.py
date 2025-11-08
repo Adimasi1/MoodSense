@@ -1,13 +1,17 @@
-import spacy
 import re
 import pandas as pd
 from typing import Union
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from sklearn.decomposition import LatentDirichletAllocation, NMF
+from functools import lru_cache
 
-# set-up
-nlp = spacy.load('en_core_web_sm')
+
+# Lazy-load spaCy model to reduce memory/startup peak on small instances.
+@lru_cache(maxsize=1)
+def get_nlp():
+    import spacy
+    return spacy.load('en_core_web_sm')
 
 # ------------ Text Processing ------------
 def lower_replace(text: str) -> str:
@@ -18,10 +22,11 @@ def lower_replace(text: str) -> str:
     return temp_text
 
 def process_text_spacy(text: str, pos_list: list) -> str:
+    nlp = get_nlp()
     doc = nlp(text)
     output = [
-        token.lemma_ 
-        for token in doc 
+        token.lemma_
+        for token in doc
         if not token.is_stop and token.pos_ in pos_list
     ]
     return ' '.join(output)
