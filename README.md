@@ -111,12 +111,3 @@ Deployment notes
 
 - Render: if deploying to Render, ensure the service uses Python 3.11 (via `runtime.txt`, the Render UI, or a manifest). Use the smallest runtime that meets your memory needs.
 - Memory note: spaCy and some NLP libraries can consume significant RAM. For small plans (e.g. 512 MB) either use lazy-loading (already implemented) or upgrade the instance.
-
-Final notes
-
-- There are example tests and sample data under the `test/` folder.
-- If you want an even lighter runtime, you can remove spaCy and use regex-based cleaning instead of lemmatization.
-
-If you want, I can commit this change and push it to the repository, or remove files like `render.yaml` if you prefer to manage runtime settings via the Render UI.
-
-FastAPI service for text cleaning and sentiment scoring.
