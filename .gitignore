@@ -1,0 +1,42 @@
+# Python / envs
+.venv/
+venv/
+env/
+.env
+/.pytest_cache/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.mypy_cache/
+
+# OS / editors
+.DS_Store
+.vscode/
+.idea/
+
+# Local databases / data / outputs
+*.db
+*.db.bak
+*.sqlite
+*.sqlite3
+*.xlsx
+*.parquet
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Secrets/examples
+.env.local
+.env.*.local
+
+# Optional: large or generated files
+sentiment_results.xlsx
+sentiment_analyzer.db.bak
+test.db
+
+# Specific files and folders
+/test
+BERTopic.py
