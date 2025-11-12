@@ -40,4 +40,4 @@ test.db
 # Specific files and folders
 /test
 /txt_and_md
-BERTopic.py
+BERT_tuning.py

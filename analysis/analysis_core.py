@@ -55,6 +55,7 @@ def tfidf_vectorize(text_clean: pd.Series, stop_words:str = 'english', ngram_ran
 
 # ------------ Sentiment Analysis with VADER ------------
 analyzer = SentimentIntensityAnalyzer()
+
 def get_vader_scores(text: str) -> dict:
     original_scores = analyzer.polarity_scores(text)
     renamed_scores = {
@@ -73,34 +74,3 @@ def create_vader_frame(df: pd.DataFrame, col_name: str) -> pd.DataFrame:
 def add_vader_col(df: pd.DataFrame, col_name: str) -> pd.DataFrame:
     return df.join(create_vader_frame(df, col_name))
 
-# ------------ NMF_modeling dor max 10000 rows dataset ------------
-# NMF works well with TF-IDF vectorization.
-def NMF_modeling(dtm, n_components: int = 5, vectorizer=None, random_state=42, 
-                 topic_displayed: int=10, max_iter: int = 200):
-    model = NMF(n_components=n_components, random_state=random_state, max_iter=max_iter)
-    model.fit(dtm)
-    feature_names = vectorizer.get_feature_names_out()
-    topics_dict = {}
-
-    for topic_idx, topic in enumerate(model.components_):
-        top_words_indices = topic.argsort()[:-topic_displayed - 1: -1]
-        top_words = [feature_names[i] for i in top_words_indices]
-        topics_dict[f"topic_{topic_idx+1}"] = top_words
-
-    return topics_dict
-
-# ------------ Latent Dirichlet Allocation (LDA) for medium dataset (10001 - 100000) ------------
-# LDA works with raw word counts from CountVectorizer.
-def LDA_modeling(dtm, n_components: int = 5, vectorizer=None, random_state=42, 
-                 topic_displayed: int=10, max_iter: int = 200):
-    model = LatentDirichletAllocation(n_components=n_components, random_state=random_state, max_iter=max_iter)
-    model.fit(dtm)
-    feature_names = vectorizer.get_feature_names_out()
-    topics_dict = {}
-    
-    for topic_idx, topic in enumerate(model.components_):
-        top_words_indices = topic.argsort()[:-topic_displayed - 1: -1]
-        top_words = [feature_names[i] for i in top_words_indices]
-        topics_dict[f"topic_{topic_idx+1}"] = top_words
-
-    return topics_dict
