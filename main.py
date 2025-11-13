@@ -8,13 +8,21 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS middleware (allow all origins for development)
+# CORS middleware
+# For production, add your actual frontend domains here
+allowed_origins = [
+    "https://moodsense-b9ha.onrender.com",  # Your production API domain
+    "http://localhost:3000",  # React/Next.js dev
+    "http://localhost:5173",  # Vite dev
+    "http://localhost",  # Flutter web dev (covers all localhost ports)
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=allowed_origins,  # Specific domains only
+    allow_credentials=False,  # Set True only if using cookies/auth
+    allow_methods=["GET", "POST"],  # Only methods you actually use
+    allow_headers=["*"],  # Can restrict to ["Content-Type", "Authorization"] if needed
 )
 
 app.include_router(analysis_router, prefix="/api/v1")

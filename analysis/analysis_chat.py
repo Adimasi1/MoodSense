@@ -1,7 +1,7 @@
 from typing import List, Dict
-from app.routers.analysis_router import analysis_emotion
-from app.routers.analysis_router import analysis_core
-from app.routers.analysis_router import stats_calculator
+from analysis import analysis_emotion
+from analysis import analysis_core
+from analysis import stats_calculator
 
 def analyze_full_chat(messages: list[dict], metadata: dict) -> dict:
   # 1. Analyze emotions (DistilRoBERTa)

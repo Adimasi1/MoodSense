@@ -50,14 +50,14 @@ sentiment-analyzer/
 ├── app/                          # FastAPI application package
 │   ├── __init__.py              # Makes 'app' a Python package
 │   ├── routers/                 # API endpoint definitions
-│   │   ├── __init__.py         
+│   │   ├── __init__.py
 │   │   └── analysis_router.py   # Chat analysis endpoint (/analyze-conversation)
 │   └── schemas/                 # Pydantic models for request/response validation
-│       ├── __init__.py         
+│       ├── __init__.py
 │       └── analysis.py          # All schemas for chat analysis API
 │
 ├── analysis/                     # Core business logic (AI models, parsers, calculators)
-│   ├── __init__.py              
+│   ├── __init__.py
 │   ├── analysis_chat.py         # Main orchestrator: calls emotion, sentiment, stats
 │   ├── analysis_core.py         # VADER sentiment + spaCy text processing
 │   ├── analysis_emotion.py      # DistilRoBERTa emotion detection (batch processing)
@@ -83,6 +83,7 @@ sentiment-analyzer/
 ### **Root Directory**
 
 #### `main.py`
+
 - **What it does**: Creates the FastAPI application and registers API routes
 - **Key code**:
   - Creates `FastAPI()` instance with title, description, version
@@ -97,6 +98,7 @@ sentiment-analyzer/
 This folder contains everything related to the web API (endpoints, request/response validation).
 
 #### `app/routers/analysis_router.py`
+
 - **What it does**: Defines the `/analyze-conversation` endpoint
 - **How it works**:
   1. Receives uploaded `.txt` file via HTTP POST
@@ -104,11 +106,12 @@ This folder contains everything related to the web API (endpoints, request/respo
   3. Reads file content and decodes to UTF-8 text
   4. Calls parser → analysis → returns JSON response
   5. Handles errors and returns proper HTTP status codes
-- **Import structure**: 
+- **Import structure**:
   - `from app.schemas import analysis as schemas` - validation models
   - `from analysis import chat_parser, analysis_chat` - core logic
 
 #### `app/schemas/analysis.py`
+
 - **What it does**: Defines all Pydantic models for data validation
 - **Key models**:
   - `ChatAnalysisOutput`: Main response structure with all statistics
@@ -126,6 +129,7 @@ This folder contains everything related to the web API (endpoints, request/respo
 This folder contains the "brain" of the application: AI models, parsers, calculators.
 
 #### `analysis/analysis_chat.py`
+
 - **What it does**: Main orchestrator that coordinates all analysis steps
 - **Process** (8 steps):
   1. Filters text messages (excludes media-only messages)
@@ -140,6 +144,7 @@ This folder contains the "brain" of the application: AI models, parsers, calcula
 - **Returns**: Dictionary with 12 keys (metadata + 11 statistics)
 
 #### `analysis/analysis_emotion.py`
+
 - **What it does**: Emotion detection using HuggingFace Transformers
 - **Model**: `j-hartmann/emotion-english-distilroberta-base`
 - **Key functions**:
@@ -150,6 +155,7 @@ This folder contains the "brain" of the application: AI models, parsers, calcula
 - **GPU support**: Can use GPU if available (device=0), defaults to CPU
 
 #### `analysis/analysis_core.py`
+
 - **What it does**: Sentiment analysis (VADER) and text cleaning (spaCy)
 - **Key functions**:
   - `get_nlp()`: Loads spaCy model (`en_core_web_sm`) - cached
@@ -160,6 +166,7 @@ This folder contains the "brain" of the application: AI models, parsers, calcula
   - spaCy: called by `top_words_per_user()` in stats calculator
 
 #### `analysis/chat_parser.py`
+
 - **What it does**: Parses WhatsApp `.txt` export files into structured data
 - **Supports**:
   - Italian format: `11/10/2024, 14:23 - Mario Rossi: Ciao`
@@ -180,6 +187,7 @@ This folder contains the "brain" of the application: AI models, parsers, calcula
   - `is_media`, `media_type`, `is_system`
 
 #### `analysis/stats_calculator.py`
+
 - **What it does**: Calculates all conversation statistics
 - **Public functions** (called by `analysis_chat.py`):
   - `calculate_user_emotion_stats()`: Emotion stats for one user
@@ -210,16 +218,19 @@ This folder contains the "brain" of the application: AI models, parsers, calcula
 Contains test scripts to validate the code works correctly.
 
 #### `test/test_stats_calculator.py`
+
 - **What it does**: Unit tests for all statistics functions
 - **Coverage**: 11 tests covering all public functions in `stats_calculator.py`
 - **Uses mock data**: Small MOCK_MESSAGES and MOCK_METADATA for fast testing
 
 #### `test/test_analysis_chat.py`
+
 - **What it does**: Integration test for full chat analysis pipeline
 - **Tests**: End-to-end analysis with real WhatsApp export file
 - **Output**: Saves complete analysis to `full_chat_analysis_output.txt`
 
 #### `test/WA/` folder
+
 - **Contains**: Sample WhatsApp export files for testing
 - **Examples**:
   - Small chats (125 messages) for quick tests
@@ -231,34 +242,40 @@ Contains test scripts to validate the code works correctly.
 ## 🚀 Installation
 
 ### Prerequisites
+
 - Python 3.11 or higher
 - pip (Python package manager)
 
 ### Steps
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/Adimasi1/MoodSense.git
    cd MoodSense
    ```
 
 2. **Create virtual environment** (recommended)
+
    ```bash
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
 3. **Install dependencies**
+
    ```bash
    pip install -r requirements.txt
    ```
 
 4. **Download spaCy model**
+
    ```bash
    python -m spacy download en_core_web_sm
    ```
 
 5. **Run the server**
+
    ```bash
    uvicorn main:app --reload
    ```
@@ -272,6 +289,7 @@ Contains test scripts to validate the code works correctly.
 ## 💻 Usage
 
 ### 1. Export WhatsApp Chat
+
 - Open WhatsApp on your phone
 - Go to a chat → Menu → More → Export chat
 - Choose "Without media"
@@ -280,6 +298,7 @@ Contains test scripts to validate the code works correctly.
 ### 2. Call the API
 
 **Using curl:**
+
 ```bash
 curl -X POST "http://localhost:8000/api/v1/analyze-conversation" \
   -H "Content-Type: multipart/form-data" \
@@ -287,6 +306,7 @@ curl -X POST "http://localhost:8000/api/v1/analyze-conversation" \
 ```
 
 **Using Python requests:**
+
 ```python
 import requests
 
@@ -302,6 +322,7 @@ print(data["overall_sentiment_avg"])
 ```
 
 **Using Postman:**
+
 1. Create POST request to `http://localhost:8000/api/v1/analyze-conversation`
 2. Go to Body → form-data
 3. Key: `file` (type: File)
@@ -341,9 +362,11 @@ print(data["overall_sentiment_avg"])
 ## 📡 API Endpoints
 
 ### `POST /api/v1/analyze-conversation`
+
 Analyzes a WhatsApp chat export file.
 
 **Request:**
+
 - Method: POST
 - Content-Type: multipart/form-data
 - Body: file (WhatsApp .txt export)
@@ -351,13 +374,16 @@ Analyzes a WhatsApp chat export file.
 **Response:** `ChatAnalysisOutput` (see `app/schemas/analysis.py`)
 
 **Errors:**
+
 - 400: Invalid file type (not .txt)
 - 500: Processing error (invalid format, parsing failed, etc.)
 
 ### `GET /`
+
 Root endpoint, returns API information.
 
 ### `GET /health`
+
 Health check endpoint, returns `{"status": "healthy"}`.
 
 ---
@@ -365,20 +391,25 @@ Health check endpoint, returns `{"status": "healthy"}`.
 ## 🔬 How It Works
 
 ### Emotion Detection
+
 Uses the **DistilRoBERTa** model fine-tuned on emotion classification:
+
 - Model: `j-hartmann/emotion-english-distilroberta-base`
 - 7 emotions: anger, disgust, fear, joy, neutral, sadness, surprise
 - Each message gets 7 scores (0.0 to 1.0)
 - Dominant emotion: highest score (excludes neutral if <70%)
 
 ### Sentiment Analysis
+
 Uses **VADER** (Valence Aware Dictionary and sEntiment Reasoner):
+
 - Lexicon-based (no training needed)
 - Returns: negative, neutral, positive, compound scores
 - Compound: overall sentiment (-1.0 to +1.0)
 - Good for social media/chat text
 
 ### Statistics Calculation
+
 - **Realistic averages**: Divides by ALL days in period, not just active days
   - Example: 15 messages on Monday over 501 days with 73 Mondays total = 0.21 avg/Monday
 - **Smart word filtering**: Removes user names, media artifacts, stopwords
@@ -392,16 +423,18 @@ Uses **VADER** (Valence Aware Dictionary and sEntiment Reasoner):
 ### Deploy to Render (Free Tier)
 
 1. **Create `render.yaml`** (optional, for auto-deploy):
+
    ```yaml
    services:
      - type: web
        name: moodsense
        env: python
-       buildCommand: "pip install -r requirements.txt && python -m spacy download en_core_web_sm"
-       startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT"
+       buildCommand: 'pip install -r requirements.txt && python -m spacy download en_core_web_sm'
+       startCommand: 'uvicorn main:app --host 0.0.0.0 --port $PORT'
    ```
 
 2. **Push to GitHub**:
+
    ```bash
    git add .
    git commit -m "Deploy to Render"
@@ -409,12 +442,14 @@ Uses **VADER** (Valence Aware Dictionary and sEntiment Reasoner):
    ```
 
 3. **Connect Render to GitHub**:
+
    - Go to https://render.com
    - New → Web Service
    - Connect repository
    - Render auto-detects Python and builds
 
 4. **Environment**:
+
    - Python version: 3.11
    - Build command: `pip install -r requirements.txt && python -m spacy download en_core_web_sm`
    - Start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
@@ -424,6 +459,7 @@ Uses **VADER** (Valence Aware Dictionary and sEntiment Reasoner):
    - Docs: `https://your-app-name.onrender.com/docs`
 
 ### Performance Notes
+
 - **CPU-only**: DistilRoBERTa runs on CPU (no GPU on free tier)
 - **Processing time**: ~10 seconds for 125 messages, ~2-3 minutes for 2000 messages
 - **Memory**: ~1GB RAM needed for models
