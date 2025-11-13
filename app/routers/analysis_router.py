@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status, UploadFile, File
-import schemas
+from app.schemas import analysis as schemas
 from analysis import chat_parser, analysis_chat
 
 router = APIRouter()
