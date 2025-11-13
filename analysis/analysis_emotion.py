@@ -69,24 +69,6 @@ def analyze_emotion_batch(texts: List[str], batch_size: int = 32, use_gpu: bool 
     return results
 
 
-def analyze_emotion_single(text: str) -> Dict[str, float]:
-    """
-    Analyzes emotions for a single text.
-    
-    Args:
-        text: Text string
-    
-    Returns:
-        Dict with all 7 emotion scores
-    
-    Example:
-        >>> result = analyze_emotion_single("Hey, you know you are a good person!")
-        >>> result
-        {'anger': 0.103, 'disgust': 0.022, 'fear': 0.002, 'joy': 0.714, ...}
-    """
-    return analyze_emotion_batch([text])[0]
-
-
 def get_dominant_emotion(emotion_dict: Dict[str, float], exclude_neutral: bool = True, neutral_threshold: float = 0.70) -> tuple[str, float]:
     """
     Finds the dominant emotion from emotion scores.
@@ -122,21 +104,3 @@ def get_dominant_emotion(emotion_dict: Dict[str, float], exclude_neutral: bool =
         return ('neutral', emotion_dict['neutral'])
     return max(emotions_to_consider, key=lambda x: x[1])
 
-
-def filter_strong_emotions(emotion_dict: Dict[str, float], threshold: float = 0.30) -> Dict[str, float]:
-    """
-    Filters emotions above a certain threshold (useful for UI display).
-    
-    Args:
-        emotion_dict: Dict with emotion scores
-        threshold: Minimum score to include (default: 0.30)
-    
-    Returns:
-        Dict with only strong emotions
-    
-    Example:
-        >>> emotions = {'joy': 0.714, 'anger': 0.103, 'disgust': 0.022, 'neutral': 0.111}
-        >>> filter_strong_emotions(emotions, threshold=0.10)
-        {'joy': 0.714, 'anger': 0.103, 'neutral': 0.111}
-    """
-    return {emotion: score for emotion, score in emotion_dict.items() if score >= threshold}

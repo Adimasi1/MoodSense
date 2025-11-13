@@ -1,7 +1,8 @@
 from pydantic import BaseModel
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 # --- Chat Analysis Schemas ---
+
 class EmotionStats(BaseModel):
     """Statistics for a single emotion"""
     avg: float
@@ -10,9 +11,27 @@ class EmotionStats(BaseModel):
     percentage: float
     strong_count: int
 
-class UserEmotionStats(BaseModel):
-    """Emotion statistics for a single user"""
-    user_emotion_stats: Dict[str, Dict[str, EmotionStats]]
+class WeekdayStats(BaseModel):
+    """Statistics for a single weekday"""
+    total_messages: int
+    average: float
+    days_in_period: int
+
+class StreakInfo(BaseModel):
+    """Information about conversation streak"""
+    days: int
+    start_date: Optional[str]
+    end_date: Optional[str]
+
+class EmojiCount(BaseModel):
+    """Single emoji with count"""
+    emoji: str
+    count: int
+
+class WordCount(BaseModel):
+    """Single word with count"""
+    word: str
+    count: int
 
 class ChatMetadata(BaseModel):
     """Metadata about the chat"""
@@ -27,24 +46,14 @@ class ChatMetadata(BaseModel):
 class ChatAnalysisOutput(BaseModel):
     """Complete output for chat analysis"""
     metadata: ChatMetadata
-    user_stats: List[UserEmotionStats]
-    overall_emotion_distribution: Dict[str, EmotionStats]
+    user_emotion_stats: Dict[str, Dict[str, EmotionStats]]  # user_name -> emotion -> stats
+    overall_emotion_distribution: Dict[str, EmotionStats]  # emotion -> stats
     overall_sentiment_avg: float
-    messages_count: int
-
-"""
-      v 'user_emotion_stats': user_emotion_stats,
-      'overall_emotion_distribution': overall_emotion_dist,
-      'overall_sentiment_avg': overall_sentiment,
-      'messages_analyzed': enriched,
-      'messages_per_day': messages_per_day,
-      'hourly_distribution': hourly_distribution,
-      'weekday_distribution': weekday_distribution,
-      'longest_streak': longest_streak,
-      'messages_per_user': messages_per_user,
-      'avg_message_length_per_user': avg_msg_length,
-      'top_emojis_per_user': top_emojis_per_user,
-      'top_words_per_user': top_words_per_user
-
-"""
-
+    messages_per_day: float
+    hourly_distribution: Dict[str, int]  # "00-02" -> count
+    weekday_distribution: Dict[str, WeekdayStats]  # "Monday" -> WeekdayStats
+    longest_streak: StreakInfo
+    messages_per_user: Dict[str, int]  # user_name -> count
+    avg_message_length_per_user: Dict[str, float]  # user_name -> avg_length
+    top_emojis_per_user: Dict[str, List[EmojiCount]]  # user_name -> list of emojis
+    top_words_per_user: Dict[str, List[WordCount]]  # user_name -> list of words

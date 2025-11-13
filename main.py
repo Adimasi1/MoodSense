@@ -3,9 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from analysis_endpoints import router as analysis_router
 
 app = FastAPI(
-    title="Sentiment Analysis API",
-    description="API for text cleaning, sentiment analysis, and emotion detection (stateless).",
-    version="2.0.0"
+    title="MoodSense API",
+    description="API for WhatApp conversation parsing, computing statistics on emotions and text.",
+    version="1.0.0"
 )
 
 # CORS middleware (allow all origins for development)
@@ -22,12 +22,11 @@ app.include_router(analysis_router, prefix="/api/v1")
 @app.get("/", tags=["Root"])
 async def read_root():
     return {
-        "message": "Sentiment Analyzer API is running (stateless)",
-        "version": "2.0.0",
+        "message": "MoodSense API API is running (stateless)",
+        "version": "1.0.0",
         "endpoints": {
             "docs": "/docs",
-            "analyze_single": "/api/v1/analyze-single",
-            "analyze_batch": "/api/v1/analyze-batch"
+            "analyze-conversation": "/api/v1/analyze-single",
         }
     }
 

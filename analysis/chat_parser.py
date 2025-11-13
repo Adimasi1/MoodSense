@@ -352,7 +352,6 @@ def get_chat_metadata(messages: List[Dict]) -> Dict:
     return {
         'total_messages': len(messages),
         'num_users': len(users),
-        'users': users,
         'users': sorted(users),
         'start_date': messages[0]['timestamp'],
         'end_date': messages[-1]['timestamp'],
@@ -361,43 +360,3 @@ def get_chat_metadata(messages: List[Dict]) -> Dict:
         'media_by_type': media_by_type
     }
 
-
-def filter_messages_by_user(messages: List[Dict], user_name: str) -> List[Dict]:
-    """
-    Filters messages from a single user.
-    
-    Args:
-        messages: message list
-        user_name: exact user name
-    
-    Returns:
-        List of messages only from that user
-    """
-    return [msg for msg in messages if msg['user'] == user_name]
-
-
-def filter_messages_by_date_range(
-    messages: List[Dict],
-    start_date: Optional[datetime] = None,
-    end_date: Optional[datetime] = None
-) -> List[Dict]:
-    """
-    Filters messages within a time range.
-    
-    Args:
-        messages: message list
-        start_date: range start (inclusive). None = no lower limit
-        end_date: range end (inclusive). None = no upper limit
-    
-    Returns:
-        List of messages within the range
-    """
-    filtered = messages
-    
-    if start_date:
-        filtered = [msg for msg in filtered if msg['timestamp'] >= start_date]
-    
-    if end_date:
-        filtered = [msg for msg in filtered if msg['timestamp'] <= end_date]
-    
-    return filtered

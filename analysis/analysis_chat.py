@@ -40,25 +40,37 @@ def analyze_full_chat(messages: list[dict], metadata: dict) -> dict:
   # 5. Overall emotion stats
   overall_emotion_dist = stats_calculator.calculate_overall_emotion_distribution(enriched)
   
-  # Calculate average sentiment
+  # 6. Calculate average sentiment
   sentiment_scores = [m['sentiment_compound'] for m in enriched if m.get('sentiment_compound')]
   overall_sentiment = sum(sentiment_scores) / len(sentiment_scores) if sentiment_scores else 0.0
 
-  # 6. Additional statistics
-  messages_per_day = stats_calculator.calculate_messages_per_day(metadata)
+  # 7. Additional statistics
+  messages_per_day = stats_calculator.calculate_avg_messages_per_day(metadata)
   hourly_distribution = stats_calculator.compute_messages_per_hours_category(enriched)
-  weekday_distribution = stats_calculator.compute_avg_and_count_messages_grouped_by_day(enriched, metadata)
+  weekday_distribution = stats_calculator.compute_avg_and_count_messages_by_day(enriched, metadata)
   longest_streak = stats_calculator.compute_longest_conversation_streak(enriched, metadata)
   messages_per_user = stats_calculator.messages_per_user(enriched, metadata)
   avg_msg_length = stats_calculator.avg_message_length_per_user(enriched, metadata)
   top_emojis_per_user = stats_calculator.top_emojis(enriched, metadata, N=10)
   top_words_per_user = stats_calculator.top_words_per_user(enriched, metadata, N=20)
 
+  # 8. Prepare metadata for response (convert dates to strings)
+  metadata_output = {
+      'total_messages': metadata['total_messages'],
+      'users': metadata['users'],
+      'start_date': metadata['start_date'].isoformat(),
+      'end_date': metadata['end_date'].isoformat(),
+      'media_count': metadata['total_media'],
+      'media_by_type': metadata['media_by_type'],
+      'media_by_user': metadata['media_by_user']
+  }
+
   return {
+      'metadata': metadata_output,
       'user_emotion_stats': user_emotion_stats,
       'overall_emotion_distribution': overall_emotion_dist,
       'overall_sentiment_avg': overall_sentiment,
-      'messages_analyzed': enriched,
+      # 'messages_analyzed': enriched, ---> we have to send back the statistics without the message bodies
       'messages_per_day': messages_per_day,
       'hourly_distribution': hourly_distribution,
       'weekday_distribution': weekday_distribution,

@@ -60,7 +60,6 @@ def __calculate_emotion_stats(enriched_messages: list[dict], user_name: str = No
     Returns:
         Dict con statistiche per ogni emozione (7 emozioni totali)
     """
-    # TODO: implementa qui
     EMOTIONS = ['anger', 'disgust', 'fear', 'joy', 'neutral', 'sadness', 'surprise']
     if user_name:
          messages = [msg for msg in enriched_messages if msg['user'] == user_name]
@@ -93,13 +92,6 @@ def __calculate_emotion_stats(enriched_messages: list[dict], user_name: str = No
 
     return stats
 
-def __lower_replace(text: str) -> str:
-    temp_text = text.lower()
-    temp_text = re.sub(r'\[.*?\]', '', temp_text)
-    temp_text = re.sub(r'[^\w\s]', '', temp_text)
-
-    return temp_text
-
 # compute emotions stats by users
 def calculate_user_emotion_stats(enriched_messages: list[dict], user_name: str) -> dict:
      return __calculate_emotion_stats(enriched_messages, user_name)
@@ -107,7 +99,7 @@ def calculate_user_emotion_stats(enriched_messages: list[dict], user_name: str) 
 def calculate_overall_emotion_distribution(enriched_messages: list[dict]) -> dict:
      return __calculate_emotion_stats(enriched_messages)
 
-def calculate_messages_per_day(metadata: dict) -> float:
+def calculate_avg_messages_per_day(metadata: dict) -> float:
      """
      Compute messages per day
      
@@ -132,7 +124,7 @@ def calculate_messages_per_day(metadata: dict) -> float:
      
      return metadata['total_messages'] / total_days
 
-def compute_messages_per_hours_category(enriched_message: list[dict]) -> str:
+def compute_messages_per_hours_category(enriched_message: list[dict]) -> dict:
      HOURS = ["00-02", "02-04", "04-06", "06-08", "08-10", "10-12",
               "12-14", "14-16", "16-18", "18-20", "20-22", "22-24"]
      hours_dict = {k: 0 for k in HOURS}
@@ -143,7 +135,7 @@ def compute_messages_per_hours_category(enriched_message: list[dict]) -> str:
     
      return hours_dict
 
-def compute_avg_and_count_messages_grouped_by_day(enriched_messages: list[dict], metadata: dict) -> dict:
+def compute_avg_and_count_messages_by_day(enriched_messages: list[dict], metadata: dict) -> dict:
      """
      Calcola statistiche messaggi per giorno della settimana.
      
@@ -197,10 +189,10 @@ def compute_longest_conversation_streak(enriched_messages: list[dict], metadata:
          metadata: dict con 'users' (lista utenti della chat)
      
      Returns:
-         Dict con: longest_streak (int), streak_start_date (str), streak_end_date (str)
+         Dict con: days (int), start_date (str), end_date (str)
      """
      if not enriched_messages or len(metadata.get('users', [])) < 2:
-          return {"longest_streak": 0, "streak_start_date": None, "streak_end_date": None}
+          return {"days": 0, "start_date": None, "end_date": None}
           
      # Raggruppa messaggi per data: {date: {user1, user2}}
      daily_users = defaultdict(set)
@@ -211,7 +203,7 @@ def compute_longest_conversation_streak(enriched_messages: list[dict], metadata:
      both_days = sorted([date for date, users in daily_users.items() if len(users) >= 2])
      
      if not both_days:
-          return {"longest_streak": 0, "streak_start_date": None, "streak_end_date": None}
+          return {"days": 0, "start_date": None, "end_date": None}
      
      # Trova lo streak più lungo
      max_streak = 1
@@ -232,9 +224,9 @@ def compute_longest_conversation_streak(enriched_messages: list[dict], metadata:
                streak_start = both_days[i]
      
      return {
-          "longest_streak": max_streak,
-          "streak_start_date": best_start.isoformat(),
-          "streak_end_date": best_end.isoformat()
+          "days": max_streak,
+          "start_date": best_start.isoformat(),
+          "end_date": best_end.isoformat()
      }
 
 def messages_per_user(enriched_messages: list[dict], metadata: dict) -> dict:
@@ -272,7 +264,8 @@ def top_emojis(enriched_messages: list[dict], metadata: dict, N: int = 10) -> di
      result = {}
      for user in users_data.keys():
           sorted_emojis = sorted(users_data[user].items(), key=lambda x: x[1], reverse=True)
-          result[user] = sorted_emojis[:N]
+          # Converti tuple in dizionari
+          result[user] = [{"emoji": em, "count": cnt} for em, cnt in sorted_emojis[:N]]
      
      return result
 
@@ -306,7 +299,8 @@ def top_words_per_user(enriched_messages: list[dict], metadata: dict, N: int = 1
     result = {}
     for user, word_counts in users_words.items():
         sorted_words = sorted(word_counts.items(), key=lambda x: x[1], reverse=True)
-        result[user] = sorted_words[:N]
+        # Converti tuple in dizionari
+        result[user] = [{"word": w, "count": cnt} for w, cnt in sorted_words[:N]]
     
     return result
 
