@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from analysis_endpoints import router as analysis_router
+from app.routers.analysis_router import router as analysis_router
 
 app = FastAPI(
     title="MoodSense API",
