@@ -26,10 +26,10 @@ analyzer = SentimentIntensityAnalyzer()
 def get_vader_scores(text: str) -> dict:
     original_scores = analyzer.polarity_scores(text)
     renamed_scores = {
-        "sentiment_neg": original_scores['neg'],
-        "sentiment_neu": original_scores['neu'],
-        "sentiment_pos": original_scores['pos'],
-        "sentiment_compound": original_scores['compound']
+        "sentiment_neg": round(original_scores['neg'], 2),
+        "sentiment_neu": round(original_scores['neu'], 2),
+        "sentiment_pos": round(original_scores['pos'], 2),
+        "sentiment_compound": round(original_scores['compound'], 2)
     }
     return renamed_scores
 

@@ -58,9 +58,14 @@ def __calculate_emotion_stats(enriched_messages: list[dict], user_name: str = No
         user_name: nome dell'utente da analizzare
     
     Returns:
-        Dict con statistiche per ogni emozione (7 emozioni totali)
+        Dict con statistiche per ogni emozione (6 emozioni totali)
     """
-    EMOTIONS = ['anger', 'disgust', 'fear', 'joy', 'neutral', 'sadness', 'surprise']
+    # GoEmotions 28 emotions
+    EMOTIONS = ['admiration', 'amusement', 'anger', 'annoyance', 'approval', 'caring', 
+                'confusion', 'curiosity', 'desire', 'disappointment', 'disapproval', 
+                'disgust', 'embarrassment', 'excitement', 'fear', 'gratitude', 'grief', 
+                'joy', 'love', 'nervousness', 'optimism', 'pride', 'realization', 
+                'relief', 'remorse', 'sadness', 'surprise', 'neutral']
     if user_name:
          messages = [msg for msg in enriched_messages if msg['user'] == user_name]
     else:
@@ -83,10 +88,10 @@ def __calculate_emotion_stats(enriched_messages: list[dict], user_name: str = No
         strong_count = sum(1 for msg in messages 
                           if msg['emotions'] and msg['emotions'][emotion] > 0.30)
         stats[emotion] = {
-            'avg': avg,
-            'max': max_score,
+            'avg': round(avg, 2),
+            'max': round(max_score, 2),
             'frequency': frequency,
-            'percentage': percentage,
+            'percentage': round(percentage, 2),
             'strong_count': strong_count 
         }
 
@@ -122,7 +127,7 @@ def calculate_avg_messages_per_day(metadata: dict) -> float:
      if total_days == 0:
           return float(metadata['total_messages'])
      
-     return metadata['total_messages'] / total_days
+     return round(metadata['total_messages'] / total_days, 2)
 
 def compute_messages_per_hours_category(enriched_message: list[dict]) -> dict:
      HOURS = ["00-02", "02-04", "04-06", "06-08", "08-10", "10-12",
@@ -172,7 +177,7 @@ def compute_avg_and_count_messages_by_day(enriched_messages: list[dict], metadat
                average = total_messages / total_weekdays_in_period
                results[weekday] = {
                     "total_messages": total_messages, 
-                    "average": average,
+                    "average": round(average, 2),
                     "days_in_period": total_weekdays_in_period
                }
           else:
@@ -247,7 +252,7 @@ def avg_message_length_per_user(enriched_messages: list[dict], metadata: dict) -
                users_data[user][0] += 1
                users_data[user][1] += length
      
-     return {user: data[1] / data[0] if data[0] > 0 else 0.0 
+     return {user: round(data[1] / data[0], 2) if data[0] > 0 else 0.0 
              for user, data in users_data.items()}
 
 def top_emojis(enriched_messages: list[dict], metadata: dict, N: int = 10) -> dict:

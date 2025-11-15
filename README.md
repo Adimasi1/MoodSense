@@ -17,7 +17,7 @@ A powerful FastAPI application that analyzes WhatsApp chat exports to extract em
 
 ## ✨ Features
 
-- **Emotion Analysis**: Uses DistilRoBERTa AI model to detect 7 emotions (joy, sadness, anger, fear, disgust, surprise, neutral)
+- **Emotion Analysis**: Uses RoBERTa AI model (GoEmotions dataset) to detect 28 emotions including love, caring, admiration, excitement, and more
 - **Sentiment Analysis**: Uses VADER to calculate positive/negative sentiment scores
 - **Chat Statistics**:
   - Messages per day, per user, per weekday, per hour
@@ -27,7 +27,7 @@ A powerful FastAPI application that analyzes WhatsApp chat exports to extract em
   - Top words used by each user (with smart filtering)
 - **WhatsApp Export Parser**: Supports Italian and English WhatsApp export formats
 - **REST API**: Easy to integrate with mobile apps or web frontends
-- **Fast Processing**: Batch processing for efficient analysis of large chats
+- **Fast Processing**: ONNX-optimized model for 5x faster inference with lower memory usage
 
 ---
 
@@ -35,7 +35,8 @@ A powerful FastAPI application that analyzes WhatsApp chat exports to extract em
 
 - **FastAPI**: Modern Python web framework for building APIs
 - **Pydantic**: Data validation using Python type hints
-- **Transformers (HuggingFace)**: DistilRoBERTa model for emotion detection
+- **Transformers (HuggingFace)**: RoBERTa model fine-tuned on Google Research GoEmotions dataset
+- **ONNX Runtime**: Optimized inference engine for 5x faster emotion detection
 - **VADER Sentiment**: Lexicon-based sentiment analysis
 - **spaCy**: Natural language processing for text cleaning and lemmatization
 - **Python 3.11+**: Modern Python with type hints
@@ -145,14 +146,16 @@ This folder contains the "brain" of the application: AI models, parsers, calcula
 
 #### `analysis/analysis_emotion.py`
 
-- **What it does**: Emotion detection using HuggingFace Transformers
-- **Model**: `j-hartmann/emotion-english-distilroberta-base`
+- **What it does**: Emotion detection using HuggingFace Transformers with ONNX optimization
+- **Model**: `SamLowe/roberta-base-go_emotions-onnx` (Google Research GoEmotions dataset)
+- **28 Emotions**: admiration, amusement, anger, annoyance, approval, caring, confusion, curiosity, desire, disappointment, disapproval, disgust, embarrassment, excitement, fear, gratitude, grief, joy, love, nervousness, optimism, pride, realization, relief, remorse, sadness, surprise, neutral
 - **Key functions**:
-  - `get_emotion_classifier()`: Loads the AI model (cached, lazy-loaded)
-  - `analyze_emotion_batch()`: Analyzes multiple texts at once (batch_size=32)
-  - `get_dominant_emotion()`: Finds the strongest emotion (excludes neutral if <70%)
-- **Output**: For each message, returns 7 emotion scores (0.0 to 1.0)
-- **GPU support**: Can use GPU if available (device=0), defaults to CPU
+  - `get_emotion_classifier()`: Loads the ONNX-optimized AI model (cached, lazy-loaded)
+  - `analyze_emotion_batch()`: Analyzes multiple texts at once (batch_size=128)
+  - `get_dominant_emotion()`: Finds the strongest emotion with optional neutral exclusion
+- **Output**: For each message, returns 28 emotion scores (0.0 to 1.0)
+- **Performance**: ONNX quantized INT8 model is 5x faster than PyTorch, uses 75% less memory
+- **GPU support**: Runs on CPU (optimized for Render deployment)
 
 #### `analysis/analysis_core.py`
 
@@ -189,6 +192,7 @@ This folder contains the "brain" of the application: AI models, parsers, calcula
 #### `analysis/stats_calculator.py`
 
 - **What it does**: Calculates all conversation statistics
+- **28 Emotions tracked**: admiration, amusement, anger, annoyance, approval, caring, confusion, curiosity, desire, disappointment, disapproval, disgust, embarrassment, excitement, fear, gratitude, grief, joy, love, nervousness, optimism, pride, realization, relief, remorse, sadness, surprise, neutral
 - **Public functions** (called by `analysis_chat.py`):
   - `calculate_user_emotion_stats()`: Emotion stats for one user
   - `calculate_overall_emotion_distribution()`: Combined emotion stats
@@ -392,12 +396,16 @@ Health check endpoint, returns `{"status": "healthy"}`.
 
 ### Emotion Detection
 
-Uses the **DistilRoBERTa** model fine-tuned on emotion classification:
+Uses the **RoBERTa** model fine-tuned on Google Research GoEmotions dataset (ONNX optimized):
 
-- Model: `j-hartmann/emotion-english-distilroberta-base`
-- 7 emotions: anger, disgust, fear, joy, neutral, sadness, surprise
-- Each message gets 7 scores (0.0 to 1.0)
-- Dominant emotion: highest score (excludes neutral if <70%)
+- Model: `SamLowe/roberta-base-go_emotions-onnx`
+- Dataset: GoEmotions (58k Reddit comments curated by Google Research, Amazon Alexa, Stanford - ACL 2020)
+- **28 emotions**: admiration, amusement, anger, annoyance, approval, caring, confusion, curiosity, desire, disappointment, disapproval, disgust, embarrassment, excitement, fear, gratitude, grief, joy, **love**, nervousness, optimism, pride, realization, relief, remorse, sadness, surprise, neutral
+- Each message gets 28 scores (0.0 to 1.0)
+- Dominant emotion: highest score (with optional neutral exclusion)
+- **Performance**: ONNX quantized INT8 model - 5x faster inference, 125 MB vs 499 MB (75% smaller)
+- **Quality**: F1 score 0.81 for love detection (Precision: 0.74, Recall: 0.90)
+- License: MIT (commercial use allowed)
 
 ### Sentiment Analysis
 
@@ -414,7 +422,7 @@ Uses **VADER** (Valence Aware Dictionary and sEntiment Reasoner):
   - Example: 15 messages on Monday over 501 days with 73 Mondays total = 0.21 avg/Monday
 - **Smart word filtering**: Removes user names, media artifacts, stopwords
 - **Streak detection**: Finds longest consecutive days where BOTH users sent messages
-- **Batch processing**: Analyzes emotions in batches of 32 messages for speed
+- **Batch processing**: Analyzes emotions in batches of 128 messages for optimal speed with ONNX
 
 ---
 
@@ -460,9 +468,10 @@ Uses **VADER** (Valence Aware Dictionary and sEntiment Reasoner):
 
 ### Performance Notes
 
-- **CPU-only**: DistilRoBERTa runs on CPU (no GPU on free tier)
-- **Processing time**: ~10 seconds for 125 messages, ~2-3 minutes for 2000 messages
-- **Memory**: ~1GB RAM needed for models
+- **CPU-only**: RoBERTa ONNX model runs efficiently on CPU (no GPU needed)
+- **Processing time**: ~10-15 seconds for 1738 messages with ONNX optimization
+- **Memory**: ~600-800 MB RAM total (FastAPI + transformers + ONNX model + processing)
+- **Recommended**: Render Starter plan (1 GB RAM) - Free tier (512 MB) too tight
 - **Cold start**: First request after inactivity takes ~30 seconds (model loading)
 
 ---

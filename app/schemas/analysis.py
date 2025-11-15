@@ -33,10 +33,18 @@ class WordCount(BaseModel):
     word: str
     count: int
 
+class SentimentScore(BaseModel):
+    """VADER sentiment scores"""
+    pos: float
+    neu: float
+    neg: float
+    compound: float
+
 class ChatMetadata(BaseModel):
     """Metadata about the chat"""
     total_messages: int
     users: List[str]
+    user_mapping: Dict[str, str]  # {"user_1": "Andrea di Masi", "user_2": "Mario Rossi"}
     start_date: str
     end_date: str
     media_count: int
@@ -46,14 +54,14 @@ class ChatMetadata(BaseModel):
 class ChatAnalysisOutput(BaseModel):
     """Complete output for chat analysis"""
     metadata: ChatMetadata
-    user_emotion_stats: Dict[str, Dict[str, EmotionStats]]  # user_name -> emotion -> stats
+    user_emotion_stats: Dict[str, Dict[str, EmotionStats]]  # "user_1" -> emotion -> stats
     overall_emotion_distribution: Dict[str, EmotionStats]  # emotion -> stats
-    overall_sentiment_avg: float
+    overall_sentiment: SentimentScore
     messages_per_day: float
     hourly_distribution: Dict[str, int]  # "00-02" -> count
     weekday_distribution: Dict[str, WeekdayStats]  # "Monday" -> WeekdayStats
     longest_streak: StreakInfo
-    messages_per_user: Dict[str, int]  # user_name -> count
-    avg_message_length_per_user: Dict[str, float]  # user_name -> avg_length
-    top_emojis_per_user: Dict[str, List[EmojiCount]]  # user_name -> list of emojis
-    top_words_per_user: Dict[str, List[WordCount]]  # user_name -> list of words
+    messages_per_user: Dict[str, int]  # "user_1" -> count
+    avg_message_length_per_user: Dict[str, float]  # "user_1" -> avg_length
+    top_emojis_per_user: Dict[str, List[EmojiCount]]  # "user_1" -> list of emojis
+    top_words_per_user: Dict[str, List[WordCount]]  # "user_1" -> list of words
