@@ -11,3 +11,4 @@ optimum[onnxruntime]
 torch
 emoji
 PyNaCl
+cryptography
