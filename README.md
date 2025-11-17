@@ -19,6 +19,7 @@ A powerful FastAPI application that analyzes WhatsApp chat exports to extract em
 
 - **Emotion Analysis**: Uses RoBERTa AI model (GoEmotions dataset) to detect 28 emotions including love, caring, admiration, excitement, and more
 - **Sentiment Analysis**: Uses VADER to calculate positive/negative sentiment scores
+- **End-to-End Encryption**: Optional X25519 + XChaCha20-Poly1305 encryption for secure chat analysis
 - **Chat Statistics**:
   - Messages per day, per user, per weekday, per hour
   - Average message length
@@ -28,6 +29,7 @@ A powerful FastAPI application that analyzes WhatsApp chat exports to extract em
 - **WhatsApp Export Parser**: Supports Italian and English WhatsApp export formats
 - **REST API**: Easy to integrate with mobile apps or web frontends
 - **Fast Processing**: ONNX-optimized model for 5x faster inference with lower memory usage
+- **Cloud-Native**: Deployed on Google Cloud Run with automatic scaling
 
 ---
 
@@ -301,10 +303,12 @@ Contains test scripts to validate the code works correctly.
 
 ### 2. Call the API
 
+#### Option A: Plaintext Analysis
+
 **Using curl:**
 
 ```bash
-curl -X POST "http://localhost:8000/api/v1/analyze-conversation" \
+curl -X POST "https://moodsense-38104758698.europe-west1.run.app/api/v1/analyze-conversation" \
   -H "Content-Type: multipart/form-data" \
   -F "file=@chat.txt"
 ```
@@ -316,7 +320,7 @@ import requests
 
 with open("chat.txt", "rb") as f:
     response = requests.post(
-        "http://localhost:8000/api/v1/analyze-conversation",
+        "https://moodsense-38104758698.europe-west1.run.app/api/v1/analyze-conversation",
         files={"file": f}
     )
 
@@ -327,11 +331,56 @@ print(data["overall_sentiment_avg"])
 
 **Using Postman:**
 
-1. Create POST request to `http://localhost:8000/api/v1/analyze-conversation`
+1. Create POST request to `https://moodsense-38104758698.europe-west1.run.app/api/v1/analyze-conversation`
 2. Go to Body → form-data
 3. Key: `file` (type: File)
 4. Value: Select your WhatsApp `.txt` file
 5. Send
+
+#### Option B: Encrypted Analysis (Recommended)
+
+**Using Dart (Flutter/Mobile):**
+
+See `dart_example/` folder for a complete client implementation with X25519 + XChaCha20-Poly1305 encryption.
+
+**Using Python:**
+
+```python
+import requests
+from nacl.public import PrivateKey, PublicKey, Box
+from nacl.utils import random
+from base64 import b64encode, b64decode
+
+# 1. Get server public key
+response = requests.get("https://moodsense-38104758698.europe-west1.run.app/api/v1/public-key")
+server_public_key = PublicKey(b64decode(response.json()["public_key"]))
+
+# 2. Generate client keypair
+client_private_key = PrivateKey.generate()
+client_public_key = client_private_key.public_key
+
+# 3. Encrypt chat data
+box = Box(client_private_key, server_public_key)
+with open("chat.txt", "r", encoding="utf-8") as f:
+    plaintext = f.read().encode("utf-8")
+
+encrypted = box.encrypt(plaintext)
+nonce = encrypted.nonce
+ciphertext = encrypted.ciphertext
+
+# 4. Send encrypted request
+response = requests.post(
+    "https://moodsense-38104758698.europe-west1.run.app/api/v1/analyze-conversation-encrypted",
+    json={
+        "encrypted_data": b64encode(ciphertext).decode(),
+        "client_public_key": b64encode(bytes(client_public_key)).decode(),
+        "nonce": b64encode(nonce).decode()
+    }
+)
+
+data = response.json()
+print(data["metadata"])
+```
 
 ### 3. Response Example
 
@@ -367,7 +416,7 @@ print(data["overall_sentiment_avg"])
 
 ### `POST /api/v1/analyze-conversation`
 
-Analyzes a WhatsApp chat export file.
+Analyzes a WhatsApp chat export file (plaintext).
 
 **Request:**
 
@@ -379,8 +428,31 @@ Analyzes a WhatsApp chat export file.
 
 **Errors:**
 
-- 400: Invalid file type (not .txt)
+- 400: Invalid file type (not .txt or application/octet-stream)
 - 500: Processing error (invalid format, parsing failed, etc.)
+
+### `POST /api/v1/analyze-conversation-encrypted`
+
+Analyzes an encrypted WhatsApp chat export.
+
+**Request:**
+
+- Method: POST
+- Content-Type: application/json
+- Body: `{"encrypted_data": "base64", "client_public_key": "base64", "nonce": "base64"}`
+
+**Response:** `ChatAnalysisOutput` (decrypted server-side)
+
+**Encryption:**
+- Uses X25519 key exchange + HKDF-SHA256 key derivation
+- XChaCha20-Poly1305 AEAD for symmetric encryption
+- Client must fetch server public key from `/api/v1/public-key` first
+
+### `GET /api/v1/public-key`
+
+Returns the server's X25519 public key for encryption.
+
+**Response:** `{"public_key": "base64_encoded_key"}`
 
 ### `GET /`
 
@@ -428,51 +500,85 @@ Uses **VADER** (Valence Aware Dictionary and sEntiment Reasoner):
 
 ## 🌐 Deployment
 
-### Deploy to Render (Free Tier)
+### Deploy to Google Cloud Run
 
-1. **Create `render.yaml`** (optional, for auto-deploy):
+This project is deployed on **Google Cloud Run** with automatic GitHub continuous deployment.
 
-   ```yaml
-   services:
-     - type: web
-       name: moodsense
-       env: python
-       buildCommand: 'pip install -r requirements.txt && python -m spacy download en_core_web_sm'
-       startCommand: 'uvicorn main:app --host 0.0.0.0 --port $PORT'
-   ```
+#### Prerequisites
 
-2. **Push to GitHub**:
+1. **Google Cloud Account** with billing enabled
+2. **gcloud CLI** installed (optional, for command-line deployment)
+3. **GitHub repository** connected to Cloud Run
 
+#### Deployment Steps
+
+1. **Enable Required APIs**:
    ```bash
-   git add .
-   git commit -m "Deploy to Render"
-   git push origin main
+   gcloud services enable run.googleapis.com
+   gcloud services enable cloudbuild.googleapis.com
+   gcloud services enable artifactregistry.googleapis.com
    ```
 
-3. **Connect Render to GitHub**:
+2. **Set up GitHub Continuous Deployment**:
+   - Go to [Cloud Run Console](https://console.cloud.google.com/run)
+   - Click **CREATE SERVICE**
+   - Select **Continuously deploy from a repository**
+   - Connect your GitHub account and select the `MoodSense` repository
+   - Branch: `main`
+   - Build type: **Dockerfile**
+   - Region: `europe-west1` (or your preferred region)
 
-   - Go to https://render.com
-   - New → Web Service
-   - Connect repository
-   - Render auto-detects Python and builds
+3. **Configure Service**:
+   - **Memory**: **2 GiB** (required for ONNX model + spaCy + processing)
+   - **CPU**: 1 CPU
+   - **Min instances**: 0 (pay only when used)
+   - **Max instances**: 1 (or more for high traffic)
+   - **Port**: 8080 (auto-detected from Dockerfile)
+   - **Authentication**: Allow unauthenticated invocations (for public API)
 
-4. **Environment**:
+4. **Set Environment Variables**:
+   - `SERVER_PRIVATE_KEY`: Base64-encoded X25519 private key (generate with `python generate_keypair.py`)
+   - `CLOUD_RUN_ENV`: `true` (enables local-only model loading)
 
-   - Python version: 3.11
-   - Build command: `pip install -r requirements.txt && python -m spacy download en_core_web_sm`
-   - Start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+5. **Deploy**:
+   - Click **CREATE**
+   - Cloud Run will build the Docker image and deploy
+   - You'll get a URL like `https://moodsense-XXXXXXXXX.region.run.app`
 
-5. **Access your API**:
-   - URL: `https://your-app-name.onrender.com`
-   - Docs: `https://your-app-name.onrender.com/docs`
+#### Automatic Deployment
+
+Every push to the `main` branch triggers an automatic rebuild and deployment.
+
+#### Manual Deployment via CLI
+
+```bash
+gcloud run deploy moodsense \
+  --source . \
+  --region europe-west1 \
+  --memory 2Gi \
+  --cpu 1 \
+  --min-instances 0 \
+  --max-instances 1 \
+  --port 8080 \
+  --allow-unauthenticated \
+  --set-env-vars CLOUD_RUN_ENV=true
+```
 
 ### Performance Notes
 
 - **CPU-only**: RoBERTa ONNX model runs efficiently on CPU (no GPU needed)
 - **Processing time**: ~10-15 seconds for 1738 messages with ONNX optimization
-- **Memory**: ~600-800 MB RAM total (FastAPI + transformers + ONNX model + processing)
-- **Recommended**: Render Starter plan (1 GB RAM) - Free tier (512 MB) too tight
-- **Cold start**: First request after inactivity takes ~30 seconds (model loading)
+- **Memory**: ~1.5-2 GB RAM total (FastAPI + transformers + ONNX model + spaCy + processing)
+- **Required**: **2 GiB RAM minimum** on Cloud Run (512 MB causes out-of-memory errors)
+- **Cold start**: First request after inactivity takes ~30-45 seconds (container startup + model loading)
+- **Cost**: With 0 min instances, you only pay per request (~€0.00001 per request)
+
+### Security Notes
+
+- **Encryption**: The `SERVER_PRIVATE_KEY` environment variable must be set for encrypted endpoints to work
+- **CORS**: Update `main.py` with your actual frontend domains
+- **Secrets**: Never commit private keys to GitHub - use Cloud Run environment variables
+- **.dockerignore**: Excludes test files, examples, and sensitive data from the Docker image
 
 ---
 

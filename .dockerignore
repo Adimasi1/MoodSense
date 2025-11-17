@@ -9,9 +9,15 @@ __pycache__/
 *.md
 !README.md
 test/
+dart_example/
 venv/
 env/
 .env
 *.log
 .DS_Store
 old.txt
+generate_keypair.py
+BERT_tuning.py
+*.db
+*.sqlite
+*.xlsx

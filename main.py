@@ -8,13 +8,11 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS middleware
-# For production, add your actual frontend domains here
+# CORS middleware - restrict to your actual frontend domains
 allowed_origins = [
-    "https://moodsense-b9ha.onrender.com",  # Your production API domain
-    "http://localhost:3000",  # React/Next.js dev
-    "http://localhost:5173",  # Vite dev
-    "http://localhost",  # Flutter web dev (covers all localhost ports)
+    "https://moodsense-38104758698.europe-west1.run.app",  # Cloud Run production
+    "http://localhost:3000",  # Local dev (React/Next.js)
+    "http://localhost:5173",  # Local dev (Vite)
 ]
 
 app.add_middleware(
