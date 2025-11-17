@@ -44,10 +44,10 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         
         # Log metriche
         logger.info(
-            f"📊 METRICS | "
+            f"[METRICS] "
             f"Path: {request.url.path} | "
             f"Duration: {duration:.2f}s | "
-            f"Memory: {mem_before:.0f}→{mem_after:.0f} MB (Δ{mem_after-mem_before:+.0f}) | "
+            f"Memory: {mem_before:.0f}->{mem_after:.0f} MB (Delta {mem_after-mem_before:+.0f}) | "
             f"CPU: {cpu_after:.1f}% | "
             f"Cost: EUR {total_cost:.6f} (CPU: EUR {cpu_cost:.6f}, MEM: EUR {mem_cost:.6f}, REQ: EUR {request_cost:.6f})"
         )
