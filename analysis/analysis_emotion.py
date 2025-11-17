@@ -1,6 +1,8 @@
 from transformers import pipeline
 from typing import List, Dict
 from functools import lru_cache
+from concurrent.futures import ThreadPoolExecutor
+import os
 
 # Jochen Hartmann, "Emotion English DistilRoBERTa-base". 
 # https://huggingface.co/j-hartmann/emotion-english-distilroberta-base/, 2022.
@@ -47,7 +49,7 @@ def get_emotion_classifier(device: int = -1):
     )
 
 
-def analyze_emotion_batch(texts: List[str], batch_size: int = 64, use_gpu: bool = False) -> List[Dict[str, float]]:
+def analyze_emotion_batch(texts: List[str], batch_size: int = 32, use_gpu: bool = False) -> List[Dict[str, float]]:
     """
     Analyzes emotions for a batch of texts using GoEmotions (28 emotions).
     
@@ -74,19 +76,29 @@ def analyze_emotion_batch(texts: List[str], batch_size: int = 64, use_gpu: bool 
     """
     device = 0 if use_gpu else -1
     classifier = get_emotion_classifier(device)
-    results = []
     
-    # Process in batches to avoid memory issues with large chats
-    for i in range(0, len(texts), batch_size):
-        batch = texts[i:i+batch_size]
+    # Split texts into batches
+    batches = [texts[i:i+batch_size] for i in range(0, len(texts), batch_size)]
+    
+    # Parallel batch processing with ThreadPoolExecutor
+    # Use max_workers=2 for dual-core CPU (matches Cloud Run config)
+    # Each batch processes independently, saturating both cores
+    def process_single_batch(batch):
         batch_results = classifier(batch)
-        
         # Convert from list of lists to list of dicts
-        # Input:  [[{label: 'anger', score: 0.1}, {label: 'joy', score: 0.7}, ...], [...]]
-        # Output: [{'anger': 0.1, 'joy': 0.7, ...}, {...}]
-        for result_list in batch_results:
-            emotion_dict = {item['label']: round(item['score'], 2) for item in result_list}
-            results.append(emotion_dict)
+        return [{item['label']: round(item['score'], 2) for item in result_list} 
+                for result_list in batch_results]
+    
+    results = []
+    max_workers = min(2, len(batches))  # Don't spawn more threads than batches
+    
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        # Process batches in parallel
+        batch_results_list = list(executor.map(process_single_batch, batches))
+    
+    # Flatten results
+    for batch_result in batch_results_list:
+        results.extend(batch_result)
     
     return results
 
