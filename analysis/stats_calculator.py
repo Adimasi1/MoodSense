@@ -3,6 +3,11 @@ import re
 from collections import defaultdict
 from analysis.analysis_core import process_text_spacy
 
+# CONSTANTS
+STRONG_EMOTION_THRESHOLD = 0.30  # Minimum score for strong emotion detection
+MIN_WORD_LENGTH = 2  # Minimum word length for analysis
+PERCENTAGE_MULTIPLIER = 100  # For percentage calculations
+
 # HELPERS
 def __emotion_avg(scores: list[int]) -> float:
      if not scores:
@@ -17,18 +22,18 @@ def __emotion_frequency(user_messages: list[dict], emotion: str) -> int:
 def __emotion_percentage(frequency: int, user_messages: list[dict]) -> float:
      if not user_messages:
           return 0.0
-     return frequency/len(user_messages) * 100
+     return frequency/len(user_messages) * PERCENTAGE_MULTIPLIER
 
 def __count_weekdays_in_period(start_date, end_date) -> dict:
      """
-     Conta quanti lunedì, martedì, ecc. ci sono in un periodo.
+     Counts how many Mondays, Tuesdays, etc. exist in a time period.
      
      Args:
-         start_date: data inizio (datetime o date)
-         end_date: data fine (datetime o date)
+         start_date: Start date (datetime or date object)
+         end_date: End date (datetime or date object)
      
      Returns:
-         Dict con conteggio per ogni giorno: {"Monday": 73, "Tuesday": 73, ...}
+         Dict with count for each weekday: {"Monday": 73, "Tuesday": 73, ...}
      """
      from datetime import timedelta
      
@@ -51,14 +56,14 @@ def __count_weekdays_in_period(start_date, end_date) -> dict:
      
 def __calculate_emotion_stats(enriched_messages: list[dict], user_name: str = None) -> dict:
     """
-    Calcola statistiche emozioni per un singolo utente.
+    Calculates emotion statistics for a single user.
     
     Args:
-        enriched_messages: lista messaggi con campo 'emotions' (da analyze_full_chat)
-        user_name: nome dell'utente da analizzare
+        enriched_messages: List of messages with 'emotions' field (from analyze_full_chat)
+        user_name: Username to analyze
     
     Returns:
-        Dict con statistiche per ogni emozione (6 emozioni totali)
+        Dict with statistics for each emotion (28 total emotions)
     """
     # GoEmotions 28 emotions
     EMOTIONS = ['admiration', 'amusement', 'anger', 'annoyance', 'approval', 'caring', 
@@ -86,7 +91,7 @@ def __calculate_emotion_stats(enriched_messages: list[dict], user_name: str = No
         frequency = __emotion_frequency(messages, emotion)
         percentage = __emotion_percentage(frequency, messages)
         strong_count = sum(1 for msg in messages 
-                          if msg['emotions'] and msg['emotions'][emotion] > 0.30)
+                          if msg['emotions'] and msg['emotions'][emotion] > STRONG_EMOTION_THRESHOLD)
         stats[emotion] = {
             'avg': round(avg, 2),
             'max': round(max_score, 2),
@@ -164,10 +169,10 @@ def compute_avg_and_count_messages_by_day(enriched_messages: list[dict], metadat
                     weekdays[weekday][date] = 0
                weekdays[weekday][date] += 1
 
-     # Conta quanti giorni di ogni tipo ci sono nel periodo
+     # Count how many days of each type exist in the period
      weekday_counts = __count_weekdays_in_period(metadata['start_date'], metadata['end_date'])
      
-     # Calcola statistiche
+     # Calculate statistics
      results = {}
      for weekday in WEEKDAYS_NAME:
           total_messages = sum(weekdays[weekday].values()) if weekdays[weekday] else 0
@@ -187,30 +192,30 @@ def compute_avg_and_count_messages_by_day(enriched_messages: list[dict], metadat
 
 def compute_longest_conversation_streak(enriched_messages: list[dict], metadata: dict) -> dict:
      """
-     Calcola lo streak più lungo di giorni consecutivi dove entrambi gli utenti hanno risposto.
+     Calculates the longest streak of consecutive days where both users responded.
      
      Args:
-         enriched_messages: lista messaggi arricchiti con timestamp
-         metadata: dict con 'users' (lista utenti della chat)
+         enriched_messages: List of enriched messages with timestamp
+         metadata: Dict with 'users' (list of chat users)
      
      Returns:
-         Dict con: days (int), start_date (str), end_date (str)
+         Dict with: days (int), start_date (str), end_date (str)
      """
      if not enriched_messages or len(metadata.get('users', [])) < 2:
           return {"days": 0, "start_date": None, "end_date": None}
           
-     # Raggruppa messaggi per data: {date: {user1, user2}}
+     # Group messages by date: {date: {user1, user2}}
      daily_users = defaultdict(set)
      for msg in enriched_messages:
           daily_users[msg['timestamp'].date()].add(msg['user'])
      
-     # Trova giorni dove entrambi hanno scritto
+     # Find days where both users messaged
      both_days = sorted([date for date, users in daily_users.items() if len(users) >= 2])
      
      if not both_days:
           return {"days": 0, "start_date": None, "end_date": None}
      
-     # Trova lo streak più lungo
+     # Find longest streak
      max_streak = 1
      current_streak = 1
      best_start = both_days[0]
@@ -218,13 +223,13 @@ def compute_longest_conversation_streak(enriched_messages: list[dict], metadata:
      streak_start = both_days[0]
      
      for i in range(1, len(both_days)):
-          if (both_days[i] - both_days[i-1]).days == 1:  # Consecutivi
+          if (both_days[i] - both_days[i-1]).days == 1:  # Consecutive days
                current_streak += 1
                if current_streak > max_streak:
                     max_streak = current_streak
                     best_start = streak_start
                     best_end = both_days[i]
-          else:  # Streak interrotto
+          else:  # Streak broken
                current_streak = 1
                streak_start = both_days[i]
      
@@ -265,7 +270,7 @@ def top_emojis(enriched_messages: list[dict], metadata: dict, N: int = 10) -> di
                     em = em_dict['emoji']
                     users_data[msg['user']][em] += 1
      
-     # Ordina per count (decrescente) e prendi top N
+     # Sort by count (descending) and take top N
      result = {}
      for user in users_data.keys():
           sorted_emojis = sorted(users_data[user].items(), key=lambda x: x[1], reverse=True)
@@ -278,33 +283,33 @@ def top_words_per_user(enriched_messages: list[dict], metadata: dict, N: int = 1
     
     users_words = {user: defaultdict(int) for user in metadata['users']}
     
-    # Stopwords personalizzate: nomi utenti + parole comuni da media messages
+    # Custom stopwords: usernames + common words from media messages
     custom_stopwords = set()
     for user in metadata['users']:
-        # Aggiungi ogni parola del nome utente (es. "Andrea Di Masi" → andrea, di, masi)
+        # Add each word from username (e.g., "John Doe" → john, doe)
         custom_stopwords.update(word.lower() for word in user.split())
     
-    # Aggiungi parole da "<Media omitted>" e simili
+    # Add words from "<Media omitted>" and similar
     custom_stopwords.update(['medium', 'omit', 'omitted', 'media', 'message', 'deleted'])
     
     for msg in enriched_messages:
-        # Salta messaggi media e messaggi troppo corti
+        # Skip media messages and very short messages
         if msg and msg['message'] and not msg.get('is_media', False):
-            # Usa spaCy per pulire e lemmatizzare
-            # Rimuovi PROPN (nomi propri) dalla lista per evitare nomi di persone/luoghi
+            # Use spaCy to clean and lemmatize
+            # Remove PROPN (proper nouns) to avoid person/place names
             cleaned = process_text_spacy(msg['message'], pos_list=['NOUN', 'VERB', 'ADJ', 'ADV'])
             words = cleaned.split()
             
             for word in words:
-                # Filter: length > 2 and not in custom stopwords
-                if len(word) > 2 and word.lower() not in custom_stopwords:
+                # Filter: length > MIN_WORD_LENGTH and not in custom stopwords
+                if len(word) > MIN_WORD_LENGTH and word.lower() not in custom_stopwords:
                     users_words[msg['user']][word] += 1
     
-    # Ordina e prendi top N
+    # Sort and take top N
     result = {}
     for user, word_counts in users_words.items():
         sorted_words = sorted(word_counts.items(), key=lambda x: x[1], reverse=True)
-        # Converti tuple in dizionari
+        # Convert tuples to dictionaries
         result[user] = [{"word": w, "count": cnt} for w, cnt in sorted_words[:N]]
     
     return result

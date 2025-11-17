@@ -1,4 +1,4 @@
-"""Middleware per tracciare metriche di performance e costi Cloud Run."""
+"""Middleware to track performance metrics and Cloud Run costs."""
 import time
 import psutil
 import os
@@ -9,40 +9,42 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Cloud Run pricing constants (europe-west1)
+CPU_COST_PER_VCPU_SECOND = 0.00002400  # EUR per vCPU-second
+MEMORY_COST_PER_GIB_SECOND = 0.00000250  # EUR per GiB-second
+REQUEST_COST_PER_MILLION = 0.40  # EUR per million requests
+CONFIGURED_MEMORY_GB = 2.0  # GiB allocated in Cloud Run
+MB_TO_MIB_DIVISOR = 1024  # Conversion factor for memory units
+
 class MetricsMiddleware(BaseHTTPMiddleware):
-    """Traccia tempo, memoria, CPU per ogni richiesta."""
+    """Tracks time, memory, and CPU usage for each request."""
     
     async def dispatch(self, request: Request, call_next: Callable):
-        # Metriche pre-request
+        # Pre-request metrics
         start_time = time.time()
         process = psutil.Process(os.getpid())
         
-        # Memoria iniziale
-        mem_before = process.memory_info().rss / 1024 / 1024  # MB
+        # Initial memory
+        mem_before = process.memory_info().rss / MB_TO_MIB_DIVISOR / MB_TO_MIB_DIVISOR  # MB
         cpu_before = process.cpu_percent()
         
-        # Esegui request
+        # Execute request
         response = await call_next(request)
         
-        # Metriche post-request
+        # Post-request metrics
         duration = time.time() - start_time
-        mem_after = process.memory_info().rss / 1024 / 1024  # MB
+        mem_after = process.memory_info().rss / MB_TO_MIB_DIVISOR / MB_TO_MIB_DIVISOR  # MB
         cpu_after = process.cpu_percent()
         
-        # Calcola costi Cloud Run (pricing europe-west1)
-        # CPU: €0.00002400 per vCPU-second
-        # Memory: €0.00000250 per GiB-second
-        # Request: €0.40 per million requests
-        
+        # Calculate Cloud Run costs (europe-west1 pricing)
         cpu_count = os.cpu_count() or 1
-        mem_gb = 2.0  # 2 GiB configurati
         
-        cpu_cost = (duration * cpu_count * 0.00002400)  # €
-        mem_cost = (duration * mem_gb * 0.00000250)     # €
-        request_cost = 0.40 / 1_000_000                  # €
+        cpu_cost = duration * cpu_count * CPU_COST_PER_VCPU_SECOND
+        mem_cost = duration * CONFIGURED_MEMORY_GB * MEMORY_COST_PER_GIB_SECOND
+        request_cost = REQUEST_COST_PER_MILLION / 1_000_000
         total_cost = cpu_cost + mem_cost + request_cost
         
-        # Log metriche
+        # Log metrics
         logger.info(
             f"[METRICS] "
             f"Path: {request.url.path} | "
@@ -52,7 +54,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
             f"Cost: EUR {total_cost:.6f} (CPU: EUR {cpu_cost:.6f}, MEM: EUR {mem_cost:.6f}, REQ: EUR {request_cost:.6f})"
         )
         
-        # Aggiungi header custom per debug
+        # Add custom headers for debugging
         response.headers["X-Response-Time"] = f"{duration:.2f}s"
         response.headers["X-Memory-Usage"] = f"{mem_after:.0f}MB"
         response.headers["X-Request-Cost-EUR"] = f"{total_cost:.6f}"

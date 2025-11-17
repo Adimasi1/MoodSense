@@ -2,7 +2,7 @@
 
 A powerful FastAPI application that analyzes WhatsApp chat exports to extract emotions, sentiment, and conversation statistics using AI models.
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Features](#features)
 - [Technology Stack](#technology-stack)
@@ -15,7 +15,7 @@ A powerful FastAPI application that analyzes WhatsApp chat exports to extract em
 
 ---
 
-## ✨ Features
+## Features
 
 - **Emotion Analysis**: Uses RoBERTa AI model (GoEmotions dataset) to detect 28 emotions including love, caring, admiration, excitement, and more
 - **Sentiment Analysis**: Uses VADER to calculate positive/negative sentiment scores
@@ -33,7 +33,7 @@ A powerful FastAPI application that analyzes WhatsApp chat exports to extract em
 
 ---
 
-## 🛠 Technology Stack
+## Technology Stack
 
 - **FastAPI**: Modern Python web framework for building APIs
 - **Pydantic**: Data validation using Python type hints
@@ -45,7 +45,7 @@ A powerful FastAPI application that analyzes WhatsApp chat exports to extract em
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 sentiment-analyzer/
@@ -81,7 +81,7 @@ sentiment-analyzer/
 
 ---
 
-## 📂 Detailed File Descriptions
+## Detailed File Descriptions
 
 ### **Root Directory**
 
@@ -245,7 +245,7 @@ Contains test scripts to validate the code works correctly.
 
 ---
 
-## 🚀 Installation
+## Installation
 
 ### Prerequisites
 
@@ -292,7 +292,7 @@ Contains test scripts to validate the code works correctly.
 
 ---
 
-## 💻 Usage
+## Usage
 
 ### 1. Export WhatsApp Chat
 
@@ -499,7 +499,7 @@ Uses **VADER** (Valence Aware Dictionary and sEntiment Reasoner):
 
 ---
 
-## 🌐 Deployment
+## Deployment
 
 ### Deploy to Google Cloud Run
 
@@ -587,24 +587,30 @@ gcloud run deploy moodsense \
 
 ---
 
-## 📝 License
+## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
-## 👨‍💻 Author
+## Author
 
 **Andrea Di Masi** - [GitHub](https://github.com/Adimasi1)
 
 ---
 
-## 🤝 Contributing
+## AI Assistance
+
+This README and code comments were partially edited with Claude Sonnet 4.5 to improve clarity and maintain consistency.
+
+---
+
+## Contributing
 
 Contributions are welcome! Please open an issue or submit a pull request.
 
 ---
 
-## 📧 Support
+## Support
 
 For questions or issues, please open a GitHub issue.
