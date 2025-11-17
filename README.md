@@ -444,6 +444,7 @@ Analyzes an encrypted WhatsApp chat export.
 **Response:** `ChatAnalysisOutput` (decrypted server-side)
 
 **Encryption:**
+
 - Uses X25519 key exchange + HKDF-SHA256 key derivation
 - XChaCha20-Poly1305 AEAD for symmetric encryption
 - Client must fetch server public key from `/api/v1/public-key` first
@@ -513,6 +514,7 @@ This project is deployed on **Google Cloud Run** with automatic GitHub continuou
 #### Deployment Steps
 
 1. **Enable Required APIs**:
+
    ```bash
    gcloud services enable run.googleapis.com
    gcloud services enable cloudbuild.googleapis.com
@@ -520,6 +522,7 @@ This project is deployed on **Google Cloud Run** with automatic GitHub continuou
    ```
 
 2. **Set up GitHub Continuous Deployment**:
+
    - Go to [Cloud Run Console](https://console.cloud.google.com/run)
    - Click **CREATE SERVICE**
    - Select **Continuously deploy from a repository**
@@ -529,6 +532,7 @@ This project is deployed on **Google Cloud Run** with automatic GitHub continuou
    - Region: `europe-west1` (or your preferred region)
 
 3. **Configure Service**:
+
    - **Memory**: **2 GiB** (required for ONNX model + spaCy + processing)
    - **CPU**: 1 CPU
    - **Min instances**: 0 (pay only when used)
@@ -537,6 +541,7 @@ This project is deployed on **Google Cloud Run** with automatic GitHub continuou
    - **Authentication**: Allow unauthenticated invocations (for public API)
 
 4. **Set Environment Variables**:
+
    - `SERVER_PRIVATE_KEY`: Base64-encoded X25519 private key (generate with `python generate_keypair.py`)
    - `CLOUD_RUN_ENV`: `true` (enables local-only model loading)
 

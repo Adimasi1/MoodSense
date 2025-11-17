@@ -7,7 +7,8 @@ from functools import lru_cache
 @lru_cache(maxsize=1)
 def get_nlp():
     import spacy
-    return spacy.load('en_core_web_sm')
+    # Disabilita parser/ner per velocizzare (servono solo POS tagging e lemmatization)
+    return spacy.load('en_core_web_sm', disable=['parser', 'ner'])
 
 # ------------ Text Processing ------------
 def process_text_spacy(text: str, pos_list: list) -> str:

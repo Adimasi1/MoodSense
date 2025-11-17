@@ -1,19 +1,26 @@
 from typing import List, Dict
+from concurrent.futures import ThreadPoolExecutor
 from analysis import analysis_emotion
 from analysis import analysis_core
 from analysis import stats_calculator
 
 def analyze_full_chat(messages: list[dict], metadata: dict) -> dict:
-  # 1. Analyze emotions (DistilRoBERTa)
+  # 1. Filtra messaggi di testo
   text_messages = [m for m in messages if not m['is_media']]
   texts = [m['message'] for m in text_messages]
 
-  emotion_results = analysis_emotion.analyze_emotion_batch(texts)
+  # 2. Parallelizza emotion e sentiment (risparmia 5-10 sec su chat lunghe)
+  with ThreadPoolExecutor(max_workers=2) as executor:
+    # Lancia emotion e sentiment in parallelo
+    emotion_future = executor.submit(analysis_emotion.analyze_emotion_batch, texts)
+    sentiment_future = executor.submit(lambda: [analysis_core.get_vader_scores(t) for t in texts])
+    
+    # Aspetta i risultati
+    emotion_results = emotion_future.result()
+    sentiment_results = sentiment_future.result()
+  
   dominant_emotion_results = [analysis_emotion.get_dominant_emotion(emo_dict) 
                               for emo_dict in emotion_results]
-
-  # 2. Analyze sentiment (VADER)
-  sentiment_results = [analysis_core.get_vader_scores(t) for t in texts]
 
   # 3. Merge results with original messages
   enriched = []
