@@ -3,6 +3,14 @@ from typing import Dict, List, Optional
 
 # --- Chat Analysis Schemas ---
 
+class PublicKey(BaseModel):
+    value: str
+
+class EncryptedChatPayload(BaseModel):
+    client_public_key: str
+    nonce: str
+    ciphertext: str
+
 class EmotionStats(BaseModel):
     """Statistics for a single emotion"""
     avg: float
