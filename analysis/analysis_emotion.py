@@ -47,13 +47,13 @@ def get_emotion_classifier(device: int = -1):
     )
 
 
-def analyze_emotion_batch(texts: List[str], batch_size: int = 32, use_gpu: bool = False) -> List[Dict[str, float]]:
+def analyze_emotion_batch(texts: List[str], batch_size: int = 64, use_gpu: bool = False) -> List[Dict[str, float]]:
     """
     Analyzes emotions for a batch of texts using GoEmotions (28 emotions).
     
     Args:
         texts: List of text strings
-        batch_size: Number of texts to process at once (default: 32 for CPU, 128 for GPU)
+        batch_size: Number of texts to process at once (default: 64 for CPU, 128 for GPU)
         use_gpu: Whether to use GPU (default: False)
     
     Returns:
