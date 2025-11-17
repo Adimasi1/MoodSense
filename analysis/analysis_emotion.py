@@ -19,22 +19,23 @@ def get_emotion_classifier(device: int = -1):
     """
     from optimum.onnxruntime import ORTModelForSequenceClassification
     from transformers import AutoTokenizer
-    import os
     
     model_id = "SamLowe/roberta-base-go_emotions-onnx"
     
-    # In production (Cloud Run), use only local files to avoid HuggingFace API rate limits
-    # local_files_only=True prevents any network calls to HuggingFace
-    use_local_only = os.getenv("CLOUD_RUN_ENV") == "true"
+    # Always use local files only to avoid HuggingFace API rate limits
+    # The model is pre-cached during Docker build (see Dockerfile)
+    # trust_remote_code=False prevents any remote code execution checks
     
     # Load ONNX optimized model (2-5x faster, lower memory)
     model = ORTModelForSequenceClassification.from_pretrained(
         model_id, 
-        local_files_only=use_local_only
+        local_files_only=True,
+        trust_remote_code=False
     )
     tokenizer = AutoTokenizer.from_pretrained(
         model_id,
-        local_files_only=use_local_only
+        local_files_only=True,
+        trust_remote_code=False
     )
     
     return pipeline(
