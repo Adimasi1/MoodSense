@@ -34,7 +34,7 @@ def _analyze_chat_text(text: str):
             tags=["Public-Key"])
 async def get_public_key():
     helper = _get_encryption_helper()
-    return schemas.PublicKey(value=helper.public_key_b64)
+    return schemas.PublicKey(public_key=helper.public_key_b64)
 
 
 @router.post("/analyze-conversation",

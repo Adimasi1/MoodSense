@@ -4,7 +4,7 @@ from typing import Dict, List, Optional
 # --- Chat Analysis Schemas ---
 
 class PublicKey(BaseModel):
-    value: str
+    public_key: str
 
 class EncryptedChatPayload(BaseModel):
     client_public_key: str
