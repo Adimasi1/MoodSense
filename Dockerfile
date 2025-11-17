@@ -22,16 +22,15 @@ RUN python -m spacy download en_core_web_sm
 # Copy application code
 COPY . .
 
+# Pre-download ONNX emotion model to avoid first-request timeout
+RUN python -c "from optimum.onnxruntime import ORTModelForSequenceClassification; from transformers import AutoTokenizer; model_id = 'SamLowe/roberta-base-go_emotions-onnx'; ORTModelForSequenceClassification.from_pretrained(model_id); AutoTokenizer.from_pretrained(model_id); print('GoEmotions ONNX model cached')"
+
 # Create non-root user for security
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
 # Expose port (Cloud Run will override with PORT env var)
 EXPOSE 8080
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:${PORT:-8080}/health || exit 1
 
 # Run the application
 # Cloud Run injects PORT env var; FastAPI must read it
