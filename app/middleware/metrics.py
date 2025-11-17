@@ -49,7 +49,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
             f"Duration: {duration:.2f}s | "
             f"Memory: {mem_before:.0f}→{mem_after:.0f} MB (Δ{mem_after-mem_before:+.0f}) | "
             f"CPU: {cpu_after:.1f}% | "
-            f"Cost: €{total_cost:.6f} (CPU: €{cpu_cost:.6f}, MEM: €{mem_cost:.6f}, REQ: €{request_cost:.6f})"
+            f"Cost: EUR {total_cost:.6f} (CPU: EUR {cpu_cost:.6f}, MEM: EUR {mem_cost:.6f}, REQ: EUR {request_cost:.6f})"
         )
         
         # Aggiungi header custom per debug
