@@ -55,6 +55,6 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         # Aggiungi header custom per debug
         response.headers["X-Response-Time"] = f"{duration:.2f}s"
         response.headers["X-Memory-Usage"] = f"{mem_after:.0f}MB"
-        response.headers["X-Request-Cost"] = f"€{total_cost:.6f}"
+        response.headers["X-Request-Cost-EUR"] = f"{total_cost:.6f}"
         
         return response
