@@ -10,7 +10,7 @@ private_key = b64encode(bytes(server_private_key)).decode('ascii')
 public_key = b64encode(bytes(server_public_key)).decode('ascii')
 
 print("=" * 70)
-print("🔐 MoodSense Encryption Keypair")
+print(" MoodSense Encryption Keypair")
 print("=" * 70)
 print()
 print("PRIVATE KEY (keep secret, add to Cloud Run env vars):")
