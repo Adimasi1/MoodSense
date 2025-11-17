@@ -3,12 +3,10 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from functools import lru_cache
 
 
-# Lazy-load spaCy model to reduce memory/startup peak on small instances.
 @lru_cache(maxsize=1)
 def get_nlp():
+    """Lazy-load spaCy model with minimal pipeline for performance."""
     import spacy
-    # Keep minimal pipeline: tokenizer, tagger (for POS), lemmatizer (for lemmas)
-    # Disable only parser and ner which are heavyweight and unused
     return spacy.load('en_core_web_sm', disable=['parser', 'ner'])
 
 # ------------ Text Processing ------------

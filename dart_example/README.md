@@ -5,6 +5,7 @@ Client Dart/Flutter per MoodSense API - analisi emozioni e sentiment di chat Wha
 ## 📦 File da condividere
 
 **Pacchetto completo per Flutter/Dart:**
+
 1. `lib/moodsense_client.dart` - Client principale ✅
 2. `pubspec.yaml` - Dipendenze necessarie ✅
 3. `README.md` - Documentazione ✅
@@ -17,7 +18,7 @@ Client Dart/Flutter per MoodSense API - analisi emozioni e sentiment di chat Wha
 dependencies:
   http: ^1.1.0
   http_parser: ^4.0.0
-  cryptography: ^2.5.0  # Solo se usi encryption (opzionale)
+  cryptography: ^2.5.0 # Solo se usi encryption (opzionale)
 ```
 
 ### 2. Installa
@@ -38,22 +39,22 @@ import 'package:your_app/moodsense_client.dart';
 
 void main() async {
   final client = MoodSenseClient();
-  
+
   // Leggi file esportato da WhatsApp
   final chatText = await File('chat.txt').readAsString();
-  
+
   // Analizza (timeout 2 minuti consigliato)
   final result = await client
       .analyzePlaintext(chatText)
       .timeout(Duration(minutes: 2));
-  
+
   // Usa i risultati
   print('Messaggi totali: ${result["metadata"]["total_messages"]}');
   print('Utenti: ${result["metadata"]["users"]}');
   print('Love score: ${result["overall_emotion_distribution"]["love"]["avg"]}');
   print('Caring score: ${result["overall_emotion_distribution"]["caring"]["avg"]}');
   print('Sentiment: ${result["overall_sentiment"]["compound"]}');
-  
+
   client.dispose();
 }
 ```
@@ -123,11 +124,13 @@ L'endpoint encrypted è disponibile ma ha problemi di compatibilità HKDF Dart�
 ## 🐛 Troubleshooting
 
 **Timeout errors:** Aumenta timeout a 3 minuti
+
 ```dart
 .timeout(Duration(minutes: 3))
 ```
 
 **File encoding:** Assicurati UTF-8
+
 ```dart
 final text = await file.readAsString(encoding: utf8);
 ```

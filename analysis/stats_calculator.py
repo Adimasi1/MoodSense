@@ -35,7 +35,7 @@ def __count_weekdays_in_period(start_date, end_date) -> dict:
      WEEKDAYS_NAME = ["Monday", "Tuesday", "Wednesday", "Thursday",
                       "Friday", "Saturday", "Sunday"]
      
-     # Converti in date se necessario
+     # Convert to date objects if needed
      start = start_date.date() if hasattr(start_date, 'date') else start_date
      end = end_date.date() if hasattr(end_date, 'date') else end_date
      
@@ -269,7 +269,7 @@ def top_emojis(enriched_messages: list[dict], metadata: dict, N: int = 10) -> di
      result = {}
      for user in users_data.keys():
           sorted_emojis = sorted(users_data[user].items(), key=lambda x: x[1], reverse=True)
-          # Converti tuple in dizionari
+          # Convert tuples to dictionaries
           result[user] = [{"emoji": em, "count": cnt} for em, cnt in sorted_emojis[:N]]
      
      return result
@@ -296,7 +296,7 @@ def top_words_per_user(enriched_messages: list[dict], metadata: dict, N: int = 1
             words = cleaned.split()
             
             for word in words:
-                # Filtra: lunghezza > 2 E non in stopwords personalizzate
+                # Filter: length > 2 and not in custom stopwords
                 if len(word) > 2 and word.lower() not in custom_stopwords:
                     users_words[msg['user']][word] += 1
     

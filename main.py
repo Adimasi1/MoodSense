@@ -4,7 +4,7 @@ from app.routers.analysis_router import router as analysis_router
 from app.middleware.metrics import MetricsMiddleware
 import logging
 
-# Configure logging per vedere metriche nei log Cloud Run
+# Configure logging for Cloud Run metrics
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -16,7 +16,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Metrics middleware (DEVE essere prima di CORS)
+# Metrics middleware must be added before CORS
 app.add_middleware(MetricsMiddleware)
 
 # CORS middleware - restrict to your actual frontend domains

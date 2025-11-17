@@ -5,24 +5,22 @@ from analysis import analysis_core
 from analysis import stats_calculator
 
 def analyze_full_chat(messages: list[dict], metadata: dict) -> dict:
-  # 1. Filtra messaggi di testo
+  # Filter text-only messages
   text_messages = [m for m in messages if not m['is_media']]
   texts = [m['message'] for m in text_messages]
 
-  # 2. Parallelizza emotion e sentiment (risparmia 5-10 sec su chat lunghe)
+  # Parallel processing of emotion and sentiment analysis
   with ThreadPoolExecutor(max_workers=2) as executor:
-    # Lancia emotion e sentiment in parallelo
     emotion_future = executor.submit(analysis_emotion.analyze_emotion_batch, texts)
     sentiment_future = executor.submit(lambda: [analysis_core.get_vader_scores(t) for t in texts])
     
-    # Aspetta i risultati
     emotion_results = emotion_future.result()
     sentiment_results = sentiment_future.result()
   
   dominant_emotion_results = [analysis_emotion.get_dominant_emotion(emo_dict) 
                               for emo_dict in emotion_results]
 
-  # 3. Merge results with original messages
+  # Enrich messages with emotion and sentiment data
   enriched = []
   text_idx = 0
   for msg in messages:
@@ -63,8 +61,7 @@ def analyze_full_chat(messages: list[dict], metadata: dict) -> dict:
   top_emojis_per_user = stats_calculator.top_emojis(enriched, metadata, N=10)
   top_words_per_user = stats_calculator.top_words_per_user(enriched, metadata, N=20)
 
-  # 8. Prepare metadata for response (convert dates to strings)
-  # Create user mapping: user_1, user_2, etc.
+  # Prepare response metadata with anonymized user mappings
   sorted_users = sorted(metadata['users'])
   user_mapping = {f"user_{i+1}": name for i, name in enumerate(sorted_users)}
   reverse_mapping = {name: f"user_{i+1}" for i, name in enumerate(sorted_users)}
@@ -72,7 +69,7 @@ def analyze_full_chat(messages: list[dict], metadata: dict) -> dict:
   metadata_output = {
       'total_messages': metadata['total_messages'],
       'users': metadata['users'],
-      'user_mapping': user_mapping,  # {"user_1": "Andrea di Masi", "user_2": "Mario Rossi"}
+      'user_mapping': user_mapping,
       'start_date': metadata['start_date'].isoformat(),
       'end_date': metadata['end_date'].isoformat(),
       'media_count': metadata['total_media'],
@@ -80,7 +77,7 @@ def analyze_full_chat(messages: list[dict], metadata: dict) -> dict:
       'media_by_user': metadata['media_by_user']
   }
 
-  # Convert all user-specific dictionaries to use generic keys (user_1, user_2, etc.)
+  # Apply user anonymization to all statistics
   user_emotion_stats_generic = {reverse_mapping[user]: stats for user, stats in user_emotion_stats.items()}
   messages_per_user_generic = {reverse_mapping[user]: count for user, count in messages_per_user.items()}
   avg_msg_length_generic = {reverse_mapping[user]: avg for user, avg in avg_msg_length.items()}
@@ -92,7 +89,6 @@ def analyze_full_chat(messages: list[dict], metadata: dict) -> dict:
       'user_emotion_stats': user_emotion_stats_generic,
       'overall_emotion_distribution': overall_emotion_dist,
       'overall_sentiment': overall_sentiment,
-      # 'messages_analyzed': enriched, ---> we have to send back the statistics without the message bodies
       'messages_per_day': messages_per_day,
       'hourly_distribution': hourly_distribution,
       'weekday_distribution': weekday_distribution,
