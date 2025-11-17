@@ -1,14 +1,18 @@
 # Use Python 3.11 slim image for smaller size
 FROM python:3.11-slim
 
+# Set HuggingFace cache directory to persist model in Docker image
+ENV HF_HOME=/app/.cache/huggingface
+ENV TRANSFORMERS_CACHE=/app/.cache/huggingface/transformers
+
 # Set working directory
 WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    build-essential \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+  build-essential \
+  curl \
+  && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for Docker layer caching
 COPY requirements.txt .
@@ -23,6 +27,7 @@ RUN python -m spacy download en_core_web_sm
 COPY . .
 
 # Pre-download ONNX emotion model to avoid first-request timeout
+# This will cache in /app/.cache/huggingface which is baked into the image
 RUN python -c "from optimum.onnxruntime import ORTModelForSequenceClassification; from transformers import AutoTokenizer; model_id = 'SamLowe/roberta-base-go_emotions-onnx'; ORTModelForSequenceClassification.from_pretrained(model_id); AutoTokenizer.from_pretrained(model_id); print('GoEmotions ONNX model cached')"
 
 # Create non-root user for security
