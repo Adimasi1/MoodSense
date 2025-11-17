@@ -10,8 +10,7 @@ def analyze_full_chat(messages: list[dict], metadata: dict) -> dict:
   texts = [m['message'] for m in text_messages]
 
   # 2. Parallelizza emotion e sentiment (risparmia 5-10 sec su chat lunghe)
-  # max_workers=4 to leverage hyperthreading on 2-core CPU (2 physical + 2 logical)
-  with ThreadPoolExecutor(max_workers=4) as executor:
+  with ThreadPoolExecutor(max_workers=2) as executor:
     # Lancia emotion e sentiment in parallelo
     emotion_future = executor.submit(analysis_emotion.analyze_emotion_batch, texts)
     sentiment_future = executor.submit(lambda: [analysis_core.get_vader_scores(t) for t in texts])
