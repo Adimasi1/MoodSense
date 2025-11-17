@@ -8,9 +8,13 @@ from analysis import chat_parser, analysis_chat
 router = APIRouter()
 
 def _get_encryption_helper() -> NaClEnvelopeEncryption:
+    """Lazy-load encryption helper; raises HTTPException if SERVER_PRIVATE_KEY missing."""
     private_key = os.getenv("SERVER_PRIVATE_KEY")
     if not private_key:
-        raise RuntimeError("Missing SERVER_PRIVATE_KEY env variable")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Encryption not configured: SERVER_PRIVATE_KEY environment variable missing"
+        )
     helper = getattr(_get_encryption_helper, "_helper", None)
     if helper is None:
         helper = NaClEnvelopeEncryption(private_key)
