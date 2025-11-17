@@ -40,4 +40,5 @@ test.db
 # Specific files and folders
 /test
 /txt_and_md
+/dart_example
 BERT_tuning.py

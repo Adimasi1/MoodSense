@@ -4,6 +4,7 @@ FROM python:3.11-slim
 # Set HuggingFace cache directory to persist model in Docker image
 ENV HF_HOME=/app/.cache/huggingface
 ENV TRANSFORMERS_CACHE=/app/.cache/huggingface/transformers
+ENV CLOUD_RUN_ENV=true
 
 # Set working directory
 WORKDIR /app
