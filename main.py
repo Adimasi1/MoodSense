@@ -41,3 +41,6 @@ async def read_root():
 @app.get("/health", tags=["Health"])
 async def health_check():
     return {"status": "healthy"}
+
+# For local development: uvicorn main:app --reload
+# For Cloud Run: the Dockerfile CMD handles port binding via $PORT
